@@ -11,111 +11,88 @@ creates relevant objects, and defines functions to analyze and search
 flight and maintenance records.
 """
 
-from Flight import *
-from Airport import *
-from MaintenanceRecord import *
+from Flight import *  # Importing the Flight class to use within MaintenanceRecord.
+from Airport import *  # Importing the Airport class to use within MaintenanceRecord.
 
-# Global containers
-all_airports = {}
-all_flights = {}  # flight_number : Flight object
-maintenance_records = []
+# The MaintenanceRecord class represents a maintenance record for a flight at a specific airport.
+class MaintenanceRecord:
+    def __init__(self, input_line, all_flights, all_airports):
+        """
+        Initialize a MaintenanceRecord object from a line in the maintenance file.
+        :param input_line: A line from the maintenance file containing flight number, airport code,
+                           maintenance duration, and cost per hour (separated by hyphens).
+        :param all_flights: A dictionary containing all flights (key: flight number, value: Flight object).
+        :param all_airports: A dictionary containing all airports (key: airport code, value: Airport object).
+        """
+        # Split the input line into parts and clean up whitespace.
+        parts = input_line.split('-')
+        
+        # Ensure the input line has exactly four components.
+        if len(parts) != 4:
+            raise ValueError("Invalid data string")
+        
+        # Extract and clean individual components from the input line.
+        flight_no = parts[0].strip()
+        airport_code = parts[1].strip()
+        
+        # Validate that the flight exists in the provided flights dictionary.
+        if flight_no not in all_flights:
+            raise ValueError("Flight not found")
+        
+        # Validate that the airport exists in the provided airports dictionary.
+        if airport_code not in all_airports:
+            raise ValueError("Airport not found")
+        
+        try:
+            duration = int(parts[2].strip())  # Convert maintenance duration to an integer.
+            cost_per_hour = float(parts[3].strip())  # Convert cost per hour to a float.
+        except ValueError:
+            raise ValueError("Invalid data string")
+        
+        # Set instance variables based on validated data.
+        self._flight = all_flights[flight_no]  # The flight requiring maintenance (Flight object).
+        self._maintenance_airport = all_airports[airport_code]  # The airport where maintenance occurs (Airport object).
+        self._maintenance_duration = duration  # Duration of maintenance in hours.
+        self._maintenance_cost_per_hour = cost_per_hour  # Cost per hour of maintenance.
 
-def load_flight_files(airport_file, flight_file):
-    try:
-        with open(airport_file, "r") as a_file:
-            for line in a_file:
-                if line.strip():
-                    parts = [part.strip() for part in line.strip().split("-")]
-                    if len(parts) == 3:
-                        code, country, city = parts[0], parts[1], parts[2]
-                        airport = Airport(country, city, code)
-                        all_airports[code] = airport
+    def get_total_cost(self):
+        """
+        Calculate and return the total cost of maintenance.
+        :return: Total cost as _maintenance_duration * _maintenance_cost_per_hour.
+        """
+        return self._maintenance_duration * self._maintenance_cost_per_hour
 
-        with open(flight_file, "r") as f_file:
-            for line in f_file:
-                if line.strip():
-                    cleaned = line.strip().replace("\t", "-").replace(" ", "")
-                    parts = cleaned.rsplit("-", 3)
-                    if len(parts) == 4:
-                        flight_code, origin_code, dest_code, duration = parts
-                        origin = all_airports.get(origin_code)
-                        dest = all_airports.get(dest_code)
-                        if origin and dest:
-                            try:
-                                flight = Flight(origin, dest, flight_code, float(duration))
-                                all_flights[flight_code] = flight
-                            except:
-                                continue
-        return True
-    except:
-        return False
+    def get_duration(self):
+        """
+        Getter for the maintenance duration.
+        :return: The maintenance duration in hours.
+        """
+        return self._maintenance_duration
 
-def get_airport_using_code(code):
-    if code in all_airports:
-        return all_airports[code]
-    raise ValueError(f"No airport with the given code: {code}")
+    def __str__(self):
+        """
+        Return a string representation of this MaintenanceRecord object in the format:
+          "FlightNumber (FlightDetails) from OriginAirport to be maintained at MaintenanceAirport
+           for Duration hours @ HourlyRate/hour (TotalCost)"
+        """
+        total_cost = f"${self.get_total_cost():.2f}"
+        hourly_rate = f"${self._maintenance_cost_per_hour:.2f}/hour"
+        
+        return (f"{self._flight.get_number()} ({str(self._flight)}) from "
+                f"{str(self._flight.get_origin())} to be maintained at "
+                f"{str(self._maintenance_airport)} for {self.get_duration()} hours @ "
+                f"{hourly_rate} ({total_cost})")
 
-def find_all_flights_city(city):
-    results = []
-    for flight in all_flights.values():
-        if flight.get_origin().get_city().strip().lower() == city.strip().lower() or \
-           flight.get_destination().get_city().strip().lower() == city.strip().lower():
-            results.append(flight)
-    return results
-
-def find_all_flights_country(country):
-    results = []
-    for flight in all_flights.values():
-        if flight.get_origin().get_country().strip().lower() == country.strip().lower() or \
-           flight.get_destination().get_country().strip().lower() == country.strip().lower():
-            results.append(flight)
-    return results
-
-def has_flight_between(orig_airport, dest_airport):
-    for flight in all_flights.values():
-        if flight.get_origin() == orig_airport and flight.get_destination() == dest_airport:
-            return True
-    return False
-
-def shortest_flight_from(orig_airport):
-    flights = [f for f in all_flights.values() if f.get_origin() == orig_airport]
-    return min(flights, key=lambda x: x.get_duration()) if flights else None
-
-def find_return_flight(first_flight):
-    orig_code = first_flight.get_origin().get_code()
-    dest_code = first_flight.get_destination().get_code()
-    for flight in all_flights.values():
-        if flight.get_origin().get_code() == dest_code and flight.get_destination().get_code() == orig_code:
-            return flight
-    raise ValueError(f"There is no flight from {dest_code} to {orig_code}")
-
-def create_maintenance_records(maintenance_file, flights_dict, airports_dict):
-    try:
-        with open(maintenance_file, "r") as m_file:
-            for line in m_file:
-                if line.strip():
-                    try:
-                        record = MaintenanceRecord(line.strip(), flights_dict, airports_dict)
-                        if record not in maintenance_records:
-                            maintenance_records.append(record)
-                    except ValueError:
-                        return False
-        return True
-    except:
-        return False
-
-def find_total_cost(records):
-    return sum(record.get_total_cost() for record in records)
-
-def find_total_duration(records):
-    return sum(record.get_duration() for record in records)
-
-def sort_maintenance_records(records):
-    return sorted(records)
-
-if __name__ == "__main__":
-    if load_flight_files("airports.txt", "flights.txt"):
-        print("Flights loaded:", len(all_flights))
-    else:
-        print("Failed to load files.")
-
+    def __eq__(self, other):
+        """
+        Compare two MaintenanceRecord objects for equality based on their attributes.
+        :param other: Another MaintenanceRecord object to compare with.
+        :return: True if all attributes match; False otherwise.
+                 Also returns False if 'other' is not a MaintenanceRecord object.
+        """
+        if isinstance(other, MaintenanceRecord):
+            return (self._flight == other._flight and 
+                    self._maintenance_airport == other._maintenance_airport and 
+                    self.get_duration() == other.get_duration() and 
+                    abs(self.get_total_cost() - other.get_total_cost()) < 1e-9)
+                    
