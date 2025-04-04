@@ -8,74 +8,62 @@ File created: April 4, 2025
 Flight.py - Defines the Flight class for the Air Travel system.
 """
 
-from Flight import *  # Importing the Flight class for creating Flight objects.
-from Airport import *  # Importing the Airport class for creating Airport objects.
-from MaintenanceRecord import *  # Importing the MaintenanceRecord class.
+"""
+************************************
+CS 1026B - Assignment 4: Air Travel
+Code by: Megan Kim
+Student ID: 251431752
+File created: April 4, 2025
+************************************
+Flight.py - Defines the Flight class for the Air Travel system.
+"""
 
-# Global containers for storing airports, flights, and maintenance records.
-all_airports = {}  # Dictionary to store Airport objects with their codes as keys.
-all_flights = {}  # Dictionary to store Flight objects with their flight numbers as keys.
-maintenance_records = []  # List to store MaintenanceRecord objects.
+from Airport import *
 
-def load_flight_files(airport_file, flight_file):
-    """
-    Load data from airport and flight files into their respective global containers.
-    :param airport_file: Path to the text file containing airport data.
-    :param flight_file: Path to the text file containing flight data.
-    """
-    global all_airports
-    global all_flights
-    
-    # Load airports from the airport file.
-    with open(airport_file) as af:
-        for line in af:
-            parts = line.strip().split('-')  # Split each line into components by hyphen (-).
-            if len(parts) == 3:
-                code, country, city = map(str.strip, parts)  # Clean up whitespace around components.
-                airport_obj = Airport(country=country, city=city, code=code)  # Create an Airport object.
-                all_airports[code] = airport_obj  # Add it to the global dictionary.
+class Flight:
+    def __init__(self, origin, destination, flight_number, duration):
+        if not isinstance(origin, Airport) or not isinstance(destination, Airport):
+            raise TypeError("The origin and destination must be Airport objects")
+        self._origin = origin
+        self._destination = destination
+        self._flight_number = flight_number.strip()
+        self._duration = float(duration)
 
-    # Load flights from the flight file.
-    with open(flight_file) as ff:
-        for line in ff:
-            parts = line.strip().split('-')  # Split each line into components by hyphen (-).
-            if len(parts) == 4:
-                flight_no, origin_code, dest_code, duration = map(str.strip, parts)  # Clean up whitespace around components.
-                
-                # Ensure both origin and destination airports exist before creating a Flight object.
-                if origin_code in all_airports and dest_code in all_airports:
-                    flight_obj = Flight(all_airports[origin_code], 
-                                        all_airports[dest_code], 
-                                        flight_no,
-                                        duration)
-                    all_flights[flight_no] = flight_obj  # Add it to the global dictionary.
+    def __str__(self):
+        dom_type = "domestic" if self.is_domestic() else "international"
+        return f"{self._origin.get_city()} to {self._destination.get_city()} ({dom_type}) [{round(self._duration)}h]"
 
-def load_maintenance_file(maintenance_file):
-    """
-    Load data from a maintenance file into the global list of maintenance records.
-    :param maintenance_file: Path to the text file containing maintenance data.
-    """
-    global maintenance_records
-    
-    with open(maintenance_file) as mf:
-        for line in mf:
-            try:
-                record_obj = MaintenanceRecord(line.strip(), all_flights, all_airports)  # Create a MaintenanceRecord object.
-                maintenance_records.append(record_obj)  # Add it to the global list of records.
-            except ValueError as e:
-                print(f"Skipping invalid record: {line.strip()} ({e})")  # Skip invalid lines with an error message.
+    def __eq__(self, other):
+        return isinstance(other, Flight) and self._origin == other._origin and self._destination == other._destination
 
-def get_total_maintenance_cost():
-    """
-    Calculate and return the total cost of all recorded maintenance tasks.
-    :return: Total cost as a float value.
-    """
-    return sum(record.get_total_cost() for record in maintenance_records)
+    def __add__(self, conn_flight):
+        if not isinstance(conn_flight, Flight):
+            raise TypeError("The connecting_flight must be a Flight object")
+        if self._destination != conn_flight.get_origin():
+            raise ValueError("These flights cannot be combined")
+        return Flight(self._origin, conn_flight.get_destination(), self._flight_number, self._duration + conn_flight.get_duration())
 
-# Additional functions can be implemented here based on assignment requirements.
+    def get_number(self):
+        return self._flight_number
 
-if __name__ == "__main__":
-    load_flight_files("airports.txt", "flights.txt")  # Example usage with sample files.
-    load_maintenance_file("maintenance.txt")
-    
-    print(f"Total Maintenance Cost: ${get_total_maintenance_cost():.2f}")
+    def get_origin(self):
+        return self._origin
+
+    def get_destination(self):
+        return self._destination
+
+    def get_duration(self):
+        return self._duration
+
+    def is_domestic(self):
+        return self._origin.get_country() == self._destination.get_country()
+
+    def set_origin(self, origin):
+        if not isinstance(origin, Airport):
+            raise TypeError("Origin must be an Airport object")
+        self._origin = origin
+
+    def set_destination(self, destination):
+        if not isinstance(destination, Airport):
+            raise TypeError("Destination must be an Airport object")
+        self._destination = destination
