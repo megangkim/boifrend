@@ -1,4 +1,4 @@
-"""
+
 **********************************************************
 CS 1026B Assignment 4 – Air Travel
 Code by: Megan Kim
@@ -8,7 +8,6 @@ Description: Main module for processing air travel data. It reads from text file
 creates Airport, Flight, and MaintenanceRecord objects, and includes functions
 to analyze and interact with that data.
 **********************************************************
-"""
 
 from Flight import *
 from Airport import *
@@ -81,33 +80,12 @@ def load_flight_files(airport_file, flight_file):
         return False
 
 def get_airport_using_code(code):
-    """
-    Retrieves an Airport object using its code.
-
-    Parameters:
-    - code (str): The 3-letter airport code.
-
-    Returns:
-    - Airport: The matching airport.
-
-    Raises:
-    - ValueError: If no airport is found with that code.
-    """
     for apt in all_airports:
         if apt.get_code() == code:
             return apt
     raise ValueError("No airport with the given code: " + code)
 
 def find_all_flights_city(city):
-    """
-    Finds all flights to or from the given city.
-
-    Parameters:
-    - city (str): The city to search.
-
-    Returns:
-    - list of Flight: All matching flights.
-    """
     results = []
     for flist in all_flights.values():
         for flight in flist:
@@ -116,15 +94,6 @@ def find_all_flights_city(city):
     return results
 
 def find_all_flights_country(country):
-    """
-    Finds all flights to or from the given country.
-
-    Parameters:
-    - country (str): The country to search.
-
-    Returns:
-    - list of Flight: All matching flights.
-    """
     results = []
     for flist in all_flights.values():
         for flight in flist:
@@ -133,16 +102,6 @@ def find_all_flights_country(country):
     return results
 
 def has_flight_between(orig_airport, dest_airport):
-    """
-    Checks if there is a direct flight from orig_airport to dest_airport.
-
-    Parameters:
-    - orig_airport (Airport): The starting airport.
-    - dest_airport (Airport): The destination airport.
-
-    Returns:
-    - bool: True if a direct flight exists.
-    """
     code = orig_airport.get_code()
     if code in all_flights:
         for flight in all_flights[code]:
@@ -151,15 +110,6 @@ def has_flight_between(orig_airport, dest_airport):
     return False
 
 def shortest_flight_from(orig_airport):
-    """
-    Finds the shortest flight from the given origin airport.
-
-    Parameters:
-    - orig_airport (Airport): The origin airport.
-
-    Returns:
-    - Flight or None: The shortest flight or None if no flights exist.
-    """
     code = orig_airport.get_code()
     if code in all_flights and all_flights[code]:
         shortest = all_flights[code][0]
@@ -170,18 +120,6 @@ def shortest_flight_from(orig_airport):
     return None
 
 def find_return_flight(flight):
-    """
-    Finds a return flight going from the original destination back to the origin.
-
-    Parameters:
-    - flight (Flight): The original flight.
-
-    Returns:
-    - Flight: The return flight.
-
-    Raises:
-    - ValueError: If no return flight is found.
-    """
     start = flight.get_origin()
     end = flight.get_destination()
     code = end.get_code()
@@ -192,17 +130,6 @@ def find_return_flight(flight):
     raise ValueError("There is no flight from " + end.get_code() + " to " + start.get_code())
 
 def create_maintenance_records(maintenance_file, flights_dict, airports_list):
-    """
-    Loads maintenance records from a file and adds valid ones to the global list.
-
-    Parameters:
-    - maintenance_file (str): The path to the maintenance file.
-    - flights_dict (dict): All loaded flights.
-    - airports_list (list): All loaded airports.
-
-    Returns:
-    - bool: True if loaded successfully, False otherwise.
-    """
     global maintenance_records
     try:
         with open(maintenance_file, "r") as file:
@@ -221,30 +148,12 @@ def create_maintenance_records(maintenance_file, flights_dict, airports_list):
         return False
 
 def find_total_cost(records):
-    """
-    Calculates total maintenance cost for a list of records.
-
-    Returns:
-    - float: The total cost.
-    """
     return sum([rec.get_total_cost() for rec in records])
 
 def find_total_duration(records):
-    """
-    Calculates total maintenance duration.
-
-    Returns:
-    - float: The total hours.
-    """
     return sum([rec.get_duration() for rec in records])
 
 def sort_maintenance_records(records):
-    """
-    Sorts maintenance records by total cost (ascending).
-
-    Returns:
-    - list: Sorted list of records.
-    """
     return sorted(records)
 
 if __name__ == "__main__":
