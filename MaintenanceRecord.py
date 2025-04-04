@@ -34,14 +34,21 @@ def load_flight_files(airport_file, flight_file):
         with open(flight_file, "r") as f_file:
             for line in f_file:
                 if line.strip():
-                    parts = [part.strip() for part in line.strip().split("-")]
-                    if len(parts) == 4:
-                        flight_code, origin_code, dest_code, duration = parts
-                        if origin_code in all_airports and dest_code in all_airports:
-                            origin = all_airports[origin_code]
-                            dest = all_airports[dest_code]
-                            flight = Flight(origin, dest, flight_code, float(duration))
-                            all_flights[flight_code] = flight
+                    cleaned = line.strip().replace("\t", "-").replace(" ", "")
+                    parts = cleaned.split("-")
+                    if len(parts) >= 4:
+                        flight_code = parts[0]
+                        origin_code = parts[1]
+                        dest_code = parts[2]
+                        duration = parts[3]
+                        origin = all_airports.get(origin_code)
+                        dest = all_airports.get(dest_code)
+                        if origin and dest:
+                            try:
+                                flight = Flight(origin, dest, flight_code, float(duration))
+                                all_flights[flight_code] = flight
+                            except:
+                                continue
         return True
     except:
         return False
@@ -110,7 +117,6 @@ def sort_maintenance_records(records):
     return sorted(records)
 
 if __name__ == "__main__":
-    # Example test (not run on Gradescope)
     if load_flight_files("airports.txt", "flights.txt"):
         print("Flights loaded:", len(all_flights))
     else:
