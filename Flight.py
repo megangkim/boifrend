@@ -79,4 +79,3 @@ if __name__ == "__main__":
     load_maintenance_file("maintenance.txt")
     
     print(f"Total Maintenance Cost: ${get_total_maintenance_cost():.2f}")
-
