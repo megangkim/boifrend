@@ -35,12 +35,9 @@ def load_flight_files(airport_file, flight_file):
             for line in f_file:
                 if line.strip():
                     cleaned = line.strip().replace("\t", "-").replace(" ", "")
-                    parts = cleaned.split("-")
-                    if len(parts) >= 4:
-                        flight_code = parts[0]
-                        origin_code = parts[1]
-                        dest_code = parts[2]
-                        duration = parts[3]
+                    parts = cleaned.rsplit("-", 3)
+                    if len(parts) == 4:
+                        flight_code, origin_code, dest_code, duration = parts
                         origin = all_airports.get(origin_code)
                         dest = all_airports.get(dest_code)
                         if origin and dest:
