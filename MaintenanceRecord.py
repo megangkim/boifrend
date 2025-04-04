@@ -13,12 +13,15 @@ from Airport import *
 
 class MaintenanceRecord:
     def __init__(self, input_line, all_flights, all_airports):
-        parts = [p.strip() for p in input_line.strip().split("-") if p.strip()]
+        cleaned_line = input_line.strip()
+        parts = [piece.strip() for piece in cleaned_line.split('-') if piece.strip()]
         if len(parts) == 5:
-            flight_number = parts[0] + "-" + parts[1]
-            airport_code, duration, cost = parts[2], parts[3], parts[4]
+            flight_number = parts[0] + '-' + parts[1]
+            maint_airport_code = parts[2]
+            duration_str = parts[3]
+            cost_str = parts[4]
         elif len(parts) == 4:
-            flight_number, airport_code, duration, cost = parts
+            flight_number, maint_airport_code, duration_str, cost_str = parts
         else:
             raise ValueError("Invalid data string")
 
@@ -26,14 +29,14 @@ class MaintenanceRecord:
             raise ValueError("Invalid data string")
 
         try:
-            duration = float(duration)
-            cost = float(cost)
-        except:
+            maintenance_duration = float(duration_str)
+            maintenance_cost_per_hour = float(cost_str)
+        except Exception:
             raise ValueError("Invalid data string")
 
         found_flight = None
-        for flights in all_flights.values():
-            for flight in flights:
+        for flight_list in all_flights.values():
+            for flight in flight_list:
                 if flight.get_number() == flight_number:
                     found_flight = flight
                     break
@@ -43,17 +46,17 @@ class MaintenanceRecord:
             raise ValueError("Flight not found")
 
         found_airport = None
-        for apt in all_airports:
-            if apt.get_code() == airport_code:
-                found_airport = apt
+        for airport in all_airports:
+            if airport.get_code() == maint_airport_code:
+                found_airport = airport
                 break
         if found_airport is None:
             raise ValueError("Airport not found")
 
         self._flight = found_flight
         self._maintenance_airport = found_airport
-        self._maintenance_duration = duration
-        self._maintenance_cost_per_hour = cost
+        self._maintenance_duration = maintenance_duration
+        self._maintenance_cost_per_hour = maintenance_cost_per_hour
 
     def get_total_cost(self):
         return self._maintenance_duration * self._maintenance_cost_per_hour
@@ -62,9 +65,13 @@ class MaintenanceRecord:
         return self._maintenance_duration
 
     def __str__(self):
-        return (f"{self._flight.get_number()} ({self._flight}) from {self._flight.get_origin()} "
-                f"to be maintained at {self._maintenance_airport} for {int(self._maintenance_duration)} hours "
-                f"@ ${self._maintenance_cost_per_hour}/hour (${self.get_total_cost()})")
+        flight_str = f"{self._flight.get_number()} ({self._flight})"
+        origin_str = f"{self._flight.get_origin()}"
+        maint_airport_str = f"{self._maintenance_airport}"
+        total_cost = self.get_total_cost()
+        return (f"{flight_str} from {origin_str} to be maintained at {maint_airport_str} "
+                f"for {int(self._maintenance_duration)} hours @ ${self._maintenance_cost_per_hour}/hour "
+                f"(${total_cost})")
 
     def __eq__(self, other):
         if not isinstance(other, MaintenanceRecord):
@@ -73,6 +80,9 @@ class MaintenanceRecord:
                 self._maintenance_airport == other._maintenance_airport and
                 self._maintenance_duration == other._maintenance_duration and
                 self._maintenance_cost_per_hour == other._maintenance_cost_per_hour)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def __lt__(self, other):
         return self.get_total_cost() < other.get_total_cost()
@@ -85,7 +95,3 @@ class MaintenanceRecord:
 
     def __ge__(self, other):
         return self.get_total_cost() >= other.get_total_cost()
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
