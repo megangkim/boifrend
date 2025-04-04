@@ -11,6 +11,10 @@ creates relevant objects, and defines functions to analyze and search
 flight and maintenance records.
 """
 
+import re
+from Flight import *
+from Airport import *
+
 class MaintenanceRecord:
     # This function initializes the object and assigns the given arguments to
     # the corresponding instance variable. The types for each parameter should
