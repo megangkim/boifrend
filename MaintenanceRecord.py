@@ -1,13 +1,11 @@
-"""
 *************************************************
 CS 1026B Assignment 4 – Air Travel
 Code by: Megan Kim
 Student ID: 251431752
-File created: April 4, 2025
+File created: April 2, 2025
 Description: Contains the MaintenanceRecord class that stores and manages 
 maintenance details for specific flights at specific airports.
 *************************************************
-"""
 
 import re
 from Flight import *
@@ -15,8 +13,20 @@ from Airport import *
 
 class MaintenanceRecord:
     def __init__(self, input_line, all_flights, all_airports):
+        """
+        Initializes a MaintenanceRecord object by parsing a line of data.
+
+        Parameters:
+        - input_line (str): A single line from the maintenance file.
+        - all_flights (dict): Dictionary containing all flights.
+        - all_airports (list): List of Airport objects.
+
+        Raises:
+        - ValueError: If the data is malformed or the flight/airport can't be found.
+        """
         cleaned_line = input_line.strip()
         parts = [piece.strip() for piece in cleaned_line.split('-') if piece.strip()]
+
         if len(parts) == 5:
             flight_number = parts[0] + '-' + parts[1]
             maint_airport_code = parts[2]
@@ -33,7 +43,7 @@ class MaintenanceRecord:
         try:
             maintenance_duration = float(duration_str)
             maintenance_cost_per_hour = float(cost_str)
-        except Exception:
+        except:
             raise ValueError("Invalid data string")
 
         found_flight = None
@@ -61,12 +71,15 @@ class MaintenanceRecord:
         self._maintenance_cost_per_hour = maintenance_cost_per_hour
 
     def get_total_cost(self):
+        """Returns the total cost of this maintenance record."""
         return self._maintenance_duration * self._maintenance_cost_per_hour
 
     def get_duration(self):
+        """Returns the duration of the maintenance."""
         return self._maintenance_duration
 
     def __str__(self):
+        """Returns a formatted string describing the maintenance."""
         flight_str = f"{self._flight.get_number()} ({self._flight})"
         origin_str = f"{self._flight.get_origin()}"
         maint_airport_str = f"{self._maintenance_airport}"
@@ -76,6 +89,7 @@ class MaintenanceRecord:
                 f"(${total_cost})")
 
     def __eq__(self, other):
+        """Checks if two maintenance records are the same."""
         if not isinstance(other, MaintenanceRecord):
             return False
         return (self._flight == other._flight and
@@ -97,3 +111,4 @@ class MaintenanceRecord:
 
     def __ge__(self, other):
         return self.get_total_cost() >= other.get_total_cost()
+
