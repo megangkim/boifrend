@@ -11,7 +11,6 @@ creates relevant objects, and defines functions to analyze and search
 flight and maintenance records.
 """
 
-
 from Flight import *  # Importing the Flight class for creating Flight objects.
 from Airport import *  # Importing the Airport class for creating Airport objects.
 from MaintenanceRecord import *  # Importing the MaintenanceRecord class.
@@ -83,3 +82,4 @@ if __name__ == "__main__":
     load_maintenance_file("maintenance.txt")
     
     print(f"Total Maintenance Cost: ${get_total_maintenance_cost():.2f}")
+
