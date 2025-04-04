@@ -16,9 +16,8 @@ from Airport import *
 from MaintenanceRecord import *
 
 # Global containers
-all_airports = {}                     # code -> Airport
-all_flights = {}                      # flight_number -> Flight
-flights_by_origin = {}               # origin_code -> [Flights]
+all_airports = {}
+all_flights = {}  # flight_number : Flight object
 maintenance_records = []
 
 def load_flight_files(airport_file, flight_file):
@@ -43,10 +42,6 @@ def load_flight_files(airport_file, flight_file):
                             dest = all_airports[dest_code]
                             flight = Flight(origin, dest, flight_code, float(duration))
                             all_flights[flight_code] = flight
-
-                            if origin_code not in flights_by_origin:
-                                flights_by_origin[origin_code] = []
-                            flights_by_origin[origin_code].append(flight)
         return True
     except:
         return False
@@ -57,28 +52,37 @@ def get_airport_using_code(code):
     raise ValueError(f"No airport with the given code: {code}")
 
 def find_all_flights_city(city):
-    return [f for f in all_flights.values()
-            if f.get_origin().get_city() == city or f.get_destination().get_city() == city]
+    results = []
+    for flight in all_flights.values():
+        if flight.get_origin().get_city().strip().lower() == city.strip().lower() or \
+           flight.get_destination().get_city().strip().lower() == city.strip().lower():
+            results.append(flight)
+    return results
 
 def find_all_flights_country(country):
-    return [f for f in all_flights.values()
-            if f.get_origin().get_country() == country or f.get_destination().get_country() == country]
+    results = []
+    for flight in all_flights.values():
+        if flight.get_origin().get_country().strip().lower() == country.strip().lower() or \
+           flight.get_destination().get_country().strip().lower() == country.strip().lower():
+            results.append(flight)
+    return results
 
 def has_flight_between(orig_airport, dest_airport):
-    return any(f.get_origin() == orig_airport and f.get_destination() == dest_airport
-               for f in all_flights.values())
+    for flight in all_flights.values():
+        if flight.get_origin() == orig_airport and flight.get_destination() == dest_airport:
+            return True
+    return False
 
 def shortest_flight_from(orig_airport):
-    options = [f for f in all_flights.values() if f.get_origin() == orig_airport]
-    return min(options, key=lambda x: x.get_duration()) if options else None
+    flights = [f for f in all_flights.values() if f.get_origin() == orig_airport]
+    return min(flights, key=lambda x: x.get_duration()) if flights else None
 
 def find_return_flight(first_flight):
     orig_code = first_flight.get_origin().get_code()
     dest_code = first_flight.get_destination().get_code()
-    if dest_code in flights_by_origin:
-        for f in flights_by_origin[dest_code]:
-            if f.get_destination().get_code() == orig_code:
-                return f
+    for flight in all_flights.values():
+        if flight.get_origin().get_code() == dest_code and flight.get_destination().get_code() == orig_code:
+            return flight
     raise ValueError(f"There is no flight from {dest_code} to {orig_code}")
 
 def create_maintenance_records(maintenance_file, flights_dict, airports_dict):
@@ -106,7 +110,9 @@ def sort_maintenance_records(records):
     return sorted(records)
 
 if __name__ == "__main__":
+    # Example test (not run on Gradescope)
     if load_flight_files("airports.txt", "flights.txt"):
         print("Flights loaded:", len(all_flights))
     else:
         print("Failed to load files.")
+
