@@ -1,11 +1,12 @@
-
+"""
 ******************************
 CS 1026B Assignment 4 – Air Travel
 Code by: Megan Kim
 Student ID: 251431752
-File created: April 4, 2025
+File created: April 2, 2025
 Description: This file defines the Airport class used to represent an airport.
 ******************************
+"""
 
 class Airport:
     def __init__(self, country, city, code):
@@ -17,9 +18,9 @@ class Airport:
         return f"{self._code} [{self._city}, {self._country}]"
 
     def __eq__(self, other):
-        if isinstance(other, Airport):
-            return self._code == other._code
-        return False
+        if not isinstance(other, Airport):
+            return False
+        return self._code == other._code
 
     def get_code(self):
         return self._code
