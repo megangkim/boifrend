@@ -1,105 +1,124 @@
-# Megan Kim
-# Student ID: 251431752
-# CS1026B - Assignment 4: Air Travel
-# Date: April 4, 2025
-#
-# Description:
-# This program models an air travel system including airports, flights,
-# and maintenance records. It supports searching for available flights,
-# checking for maintenance conflicts, and summarizing travel options.
+"""
+************************************
+CS 1026B - Assignment 4: Air Travel
+Code by: Megan Kim
+Student ID: 251431752
+File created: April 4, 2025
+************************************
+This file handles the core functionality for the Air Travel system.
+It loads data from airports, flights, and maintenance files,
+creates relevant objects, and defines functions to analyze and search
+flight and maintenance records.
+"""
 
-from Airport import Airport
-from Flight import Flight
-from MaintenanceRecord import MaintenanceRecord
+from Flight import *
+from Airport import *
+from MaintenanceRecord import *
 
-# Global dictionaries
-airport_dict = {}  # code -> Airport
-flight_dict = {}   # origin -> list of Flight objects
-maintenance_dict = {}  # airport code -> list of MaintenanceRecord
+# Global containers
+all_airports = {}
+all_flights = {}
+maintenance_records = []
 
-def load_airports(filename):
-    with open(filename, "r") as file:
-        for line in file:
-            parts = line.strip().split(",")
-            if len(parts) == 4:
-                code, name, city, country = parts
-                airport_dict[code] = Airport(code, name, city, country)
+def load_flight_files(airport_file, flight_file):
+    try:
+        with open(airport_file, "r") as a_file:
+            for line in a_file:
+                if line.strip():
+                    parts = [part.strip() for part in line.strip().split("-")]
+                    if len(parts) == 3:
+                        code, country, city = parts[0], parts[1], parts[2]
+                        airport = Airport(country, city, code)
+                        all_airports[code] = airport
 
-def load_flights(filename):
-    with open(filename, "r") as file:
-        for line in file:
-            parts = line.strip().split(",")
-            if len(parts) == 5:
-                origin, destination, dep_time, arr_time, cost = parts
-                flight = Flight(origin, destination, dep_time, arr_time, float(cost))
-                if origin not in flight_dict:
-                    flight_dict[origin] = []
-                flight_dict[origin].append(flight)
-
-def load_maintenance(filename):
-    with open(filename, "r") as file:
-        for line in file:
-            parts = line.strip().split(",")
-            if len(parts) == 3:
-                airport_code, start, end = parts
-                record = MaintenanceRecord(airport_code, start, end)
-                if airport_code not in maintenance_dict:
-                    maintenance_dict[airport_code] = []
-                maintenance_dict[airport_code].append(record)
-
-def is_airport_under_maintenance(airport_code, time):
-    if airport_code not in maintenance_dict:
+        with open(flight_file, "r") as f_file:
+            for line in f_file:
+                if line.strip():
+                    parts = [part.strip() for part in line.strip().split("-")]
+                    if len(parts) == 4:
+                        f_code, origin_code, dest_code, duration = parts
+                        if origin_code in all_airports and dest_code in all_airports:
+                            origin = all_airports[origin_code]
+                            dest = all_airports[dest_code]
+                            flight = Flight(origin, dest, f_code, float(duration))
+                            if origin_code not in all_flights:
+                                all_flights[origin_code] = []
+                            all_flights[origin_code].append(flight)
+        return True
+    except:
         return False
-    for record in maintenance_dict[airport_code]:
-        if record.in_maintenance(time):
-            return True
+
+def get_airport_using_code(code):
+    if code in all_airports:
+        return all_airports[code]
+    raise ValueError(f"No airport with the given code: {code}")
+
+def find_all_flights_city(city):
+    results = []
+    for flights in all_flights.values():
+        for flight in flights:
+            if flight.get_origin().get_city() == city or flight.get_destination().get_city() == city:
+                results.append(flight)
+    return results
+
+def find_all_flights_country(country):
+    results = []
+    for flights in all_flights.values():
+        for flight in flights:
+            if flight.get_origin().get_country() == country or flight.get_destination().get_country() == country:
+                results.append(flight)
+    return results
+
+def has_flight_between(orig_airport, dest_airport):
+    code = orig_airport.get_code()
+    if code in all_flights:
+        for flight in all_flights[code]:
+            if flight.get_destination() == dest_airport:
+                return True
     return False
 
-def find_all_flights(start, end):
-    result = []
-    if start not in flight_dict:
-        return result
-    for flight1 in flight_dict[start]:
-        if is_airport_under_maintenance(flight1.origin, flight1.departure) or \
-           is_airport_under_maintenance(flight1.destination, flight1.arrival):
-            continue
-        if flight1.destination == end:
-            result.append((flight1, None))
-        elif flight1.destination in flight_dict:
-            for flight2 in flight_dict[flight1.destination]:
-                if is_airport_under_maintenance(flight2.destination, flight2.arrival):
-                    continue
-                if flight2.departure > flight1.arrival and flight2.destination == end:
-                    result.append((flight1, flight2))
-    return result
+def shortest_flight_from(orig_airport):
+    code = orig_airport.get_code()
+    if code in all_flights and all_flights[code]:
+        return min(all_flights[code], key=lambda x: x.get_duration())
+    return None
 
-def print_summary(flight_options):
-    if not flight_options:
-        print("No available flights.")
-        return
-    for f1, f2 in flight_options:
-        if f2:
-            total_cost = f1.cost + f2.cost
-            print(f"{f1.origin} -> {f1.destination} -> {f2.destination}: ${total_cost:.2f}")
-        else:
-            print(f"{f1.origin} -> {f1.destination}: ${f1.cost:.2f}")
+def find_return_flight(first_flight):
+    origin_code = first_flight.get_origin().get_code()
+    dest_code = first_flight.get_destination().get_code()
+    if dest_code in all_flights:
+        for flight in all_flights[dest_code]:
+            if flight.get_destination().get_code() == origin_code:
+                return flight
+    raise ValueError(f"There is no flight from {dest_code} to {origin_code}")
 
-def main():
-    load_airports("airports.txt")
-    load_flights("flights.txt")
-    load_maintenance("maintenance.txt")
+def create_maintenance_records(maintenance_file, flights_dict, airports_dict):
+    try:
+        with open(maintenance_file, "r") as m_file:
+            for line in m_file:
+                if line.strip():
+                    try:
+                        record = MaintenanceRecord(line.strip(), flights_dict, airports_dict)
+                        if record not in maintenance_records:
+                            maintenance_records.append(record)
+                    except ValueError:
+                        return False
+        return True
+    except:
+        return False
 
-    while True:
-        user_input = input("Enter origin and destination (or quit): ").strip()
-        if user_input.lower() == "quit":
-            break
-        parts = user_input.split()
-        if len(parts) != 2:
-            print("Invalid input. Please enter origin and destination codes.")
-            continue
-        origin, destination = parts
-        results = find_all_flights(origin, destination)
-        print_summary(results)
+def find_total_cost(records):
+    return sum(record.get_total_cost() for record in records)
+
+def find_total_duration(records):
+    return sum(record.get_duration() for record in records)
+
+def sort_maintenance_records(records):
+    return sorted(records)
 
 if __name__ == "__main__":
-    main()
+    # Example test (not run on Gradescope)
+    if load_flight_files("airports.txt", "flights.txt"):
+        print("Flights loaded:", len(all_flights))
+    else:
+        print("Failed to load files.")
