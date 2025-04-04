@@ -3,7 +3,7 @@
 CS 1026B Assignment 4 – Air Travel
 Code by: Megan Kim
 Student ID: 251431752
-File created: April 2, 2025
+File created: April 4, 2025
 Description: This file defines the Flight class used to represent a flight between two airports.
 ******************************
 """
