@@ -9,10 +9,6 @@ File created: April 4, 2025
 Airport.py - Defines the Airport class for the Air Travel system.
 """
 
-import re
-from Flight import *
-from Airport import *
-
 class Airport:
     def __init__(self, country, city, code):
         self._country = country
